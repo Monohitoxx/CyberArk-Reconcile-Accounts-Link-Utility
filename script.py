@@ -1,8 +1,9 @@
 ###########################################################################
 #
-# NAME: Account Link Utility
+# NAME: Account Link Reconcile Utility
+# VERSION: 1.0
 #
-# AUTHOR:  Tim CHONG
+# AUTHOR:  Tim CHONG / Mono
 #
 # COMMENT:
 # This script will bulk Link Accounts from a CSV file using REST API.
@@ -33,6 +34,7 @@ class Logger(object):
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
      # redirect std err, if necessary
 
+print ('###########################################################################\n#\n# NAME: Account Link Reconcile Utility\n# VERSION: 1.0\n#\n# AUTHOR:  Tim CHONG\n#\n# COMMENT:\n# This script will bulk Link Accounts from a CSV file using REST API.\n#\n# SUPPORTED VERSIONS:\n# CyberArk PVWA v11.6 and above\n#\n#\n###########################################################################\n')
 csv_name = input('Enter your csv file name(name.csv): ')
 
 def readPerfReviewCSVToDict(csvPath):
@@ -53,7 +55,7 @@ def readPerfReviewCSVToDict(csvPath):
 
 dict_list = readPerfReviewCSVToDict(csv_name)
 
-cyberarkurl = input("Enter CyberArk URL or IP (Example :10.16.33.97): ")
+cyberarkurl = input("Enter CyberArk URL or IP (Example :127.0.0.1): ")
 adminusername = input("Enter CyberArk Admin username: ")
 adminupassword = input("Enter CyberArk Admin password: ")
 
@@ -101,14 +103,14 @@ for a in dict_list:
         go = requests.patch(patchurl,json=ExtraPass3Safe_patch,headers=Headers,verify=False) 
         go = requests.patch(patchurl,json=ExtraPass3Name_patch,headers=Headers,verify=False)
         if go.status_code == 200:
-            print(a['Account_Name']+' Successful to Link Recon Account !')
-            s = s+ 1
+            print(a['Account_Name']+' Successful to Link Reconcile Account to '+a['ExtraPass3Name'])
+            s = s + 1
         else:
             print(go.text)
             print('Failed !')
             f = f + 1
     except(SyntaxError):
-        print(a['Account_Name']+' Error! Account name if is correct ?')
+        print(a['Account_Name']+' Reconcile Error! Account name if is correct ?')
         e = e + 1
 
 print('All Completed ! ' +str(s)+ ' Successful '+str(f)+' Failed '+str(e)+' Error! Press Enter to continue...')  
