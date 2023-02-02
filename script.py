@@ -3,7 +3,7 @@
 # NAME: Account Link Reconcile Utility
 # VERSION: 1.0
 #
-# AUTHOR:  Tim CHONG / Mono
+# AUTHOR:  Tim CHONG
 #
 # COMMENT:
 # This script will bulk Link Accounts from a CSV file using REST API.
@@ -35,7 +35,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
      # redirect std err, if necessary
 
 print ('###########################################################################\n#\n# NAME: Account Link Reconcile Utility\n# VERSION: 1.0\n#\n# AUTHOR:  Tim CHONG\n#\n# COMMENT:\n# This script will bulk Link Accounts from a CSV file using REST API.\n#\n# SUPPORTED VERSIONS:\n# CyberArk PVWA v11.6 and above\n#\n#\n###########################################################################\n')
-csv_name = input('Enter your csv file name(name.csv): ')
 
 def readPerfReviewCSVToDict(csvPath):
     reader = csv.DictReader(open(csvPath, 'r'))
@@ -53,7 +52,14 @@ def readPerfReviewCSVToDict(csvPath):
 
     return perfReviewsDictionaryWithCommentsSplit
 
-dict_list = readPerfReviewCSVToDict(csv_name)
+while True:
+    try:
+        csv_name = input('Enter your csv file name(name.csv): ')
+        dict_list = readPerfReviewCSVToDict(csv_name)
+    except FileNotFoundError:
+        print('CSV File '+ csv_name +' no exsiting !')
+        continue
+    break
 
 cyberarkurl = input("Enter CyberArk URL or IP (Example :127.0.0.1): ")
 adminusername = input("Enter CyberArk Admin username: ")
@@ -104,14 +110,14 @@ for a in dict_list:
         go = requests.patch(patchurl,json=ExtraPass3Name_patch,headers=Headers,verify=False)
         if go.status_code == 200:
             print(a['Account_Name']+' Successful to Link Reconcile Account to '+a['ExtraPass3Name'])
-            s = s + 1
+            s = s+ 1
         else:
             print(go.text)
             print('Failed !')
             f = f + 1
     except(SyntaxError):
-        print(a['Account_Name']+' Reconcile Error! Account name if is correct ?')
+        print(a['Account_Name']+' Error! Account name if is correct ?')
         e = e + 1
 
-print('All Completed ! ' +str(s)+ ' Successful '+str(f)+' Failed '+str(e)+' Error! Press Enter to continue...')  
+print('All Reconcile Completed ! ' +str(s)+ ' Successful '+str(f)+' Failed '+str(e)+' Error! Press Enter to continue...')  
 input("")
