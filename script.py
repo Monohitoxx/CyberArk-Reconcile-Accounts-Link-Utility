@@ -71,7 +71,7 @@ while True:
         continue
     break
 
-cyberarkurl = ipEntered()
+cyberarkurl = str(ipEntered())
 adminusername = input("Enter CyberArk Admin username: ")
 adminupassword = input("Enter CyberArk Admin password: ")
 
