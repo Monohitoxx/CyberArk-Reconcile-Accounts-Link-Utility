@@ -19,7 +19,9 @@ import urllib3
 import csv
 import ast
 import sys
-class Logger(object):
+import ipaddress
+
+class Logger(object): # Create log for the results
     def __init__(self, filename='results.log', stream=sys.stdout):
         self.terminal = stream
         self.log = open(filename, 'a')
@@ -52,18 +54,27 @@ def readPerfReviewCSVToDict(csvPath):
 
     return perfReviewsDictionaryWithCommentsSplit
 
+def ipEntered(): # check input ip address only
+    while True:
+        try:
+            val = input("Please enter your CyberArk ip address :")
+            return ipaddress.ip_address(val)
+        except ValueError:
+            print("Not a valid IP address")
+
 while True:
     try:
         csv_name = input('Enter your csv file name(name.csv): ')
         dict_list = readPerfReviewCSVToDict(csv_name)
     except FileNotFoundError:
-        print('CSV File '+ csv_name +' no exsiting !')
+        print('CSV File '+ csv_name +' not found!')
         continue
     break
 
-cyberarkurl = input("Enter CyberArk URL or IP (Example :127.0.0.1): ")
+cyberarkurl = ipEntered()
 adminusername = input("Enter CyberArk Admin username: ")
 adminupassword = input("Enter CyberArk Admin password: ")
+
 
 adminaccount = {
 "username": adminusername,
@@ -77,7 +88,6 @@ e = 0
 tokenurl = 'https://'+cyberarkurl+'/PasswordVault/API/auth/Cyberark/Logon/' 
 token = requests.post(tokenurl ,json = adminaccount,verify=False)
 print('Your seesion token is: '+ token.text)
-
 seesiontoken = input("Enter your token: ")
 
 sys.stdout = Logger(stream=sys.stdout)
@@ -86,7 +96,7 @@ Headers = {
     "Authorization" : seesiontoken,
     "Content-Type" : "application/json"
 }
-#Add Root to Folder
+
 for a in dict_list:
     try:
         searchurl = 'https://'+cyberarkurl+'/passwordvault/api/accounts?search='+a['Account_Name']
@@ -94,17 +104,18 @@ for a in dict_list:
         dict1 = str(go2.json())
         dict2 = dict1.replace("{'value': [",'')
         dict3 = dict2.replace("], 'count': 1}",'')
-        dict4 = ast.literal_eval(dict3)
+        dict4 = ast.literal_eval(dict3)  #string to dict 
         ExtraPass3Folder_patch = [
-        { "op": "add", "path": "/platformAccountProperties/ExtraPass3Folder", "value": "Root"}
+        { "op": "add", "path": "/platformAccountProperties/ExtraPass3Folder", "value": "Root"} #Add Root to Folder
         ]
         ExtraPass3Safe_patch = [
-        { "op": "add", "path": "/platformAccountProperties/ExtraPass3Safe", "value": a['ExtraPass3Safe']}
+        { "op": "add", "path": "/platformAccountProperties/ExtraPass3Safe", "value": a['ExtraPass3Safe']} #Add ExtraPass3Safe
         ]
         ExtraPass3Name_patch = [
-        { "op": "add", "path": "/platformAccountProperties/ExtraPass3Name", "value": a['ExtraPass3Name']}
+        { "op": "add", "path": "/platformAccountProperties/ExtraPass3Name", "value": a['ExtraPass3Name']} #Add ExtraPass3Name
         ]
         patchurl = 'https://'+cyberarkurl+'/PasswordVault/api/Accounts/'+dict4['id']
+        # Patch method https://cyberark-customers.force.com/s/article/Add-Reconcile-and-Login-Accounts-to-an-Account-using-V10-REST-API
         go = requests.patch(patchurl,json=ExtraPass3Folder_patch,headers=Headers,verify=False) 
         go = requests.patch(patchurl,json=ExtraPass3Safe_patch,headers=Headers,verify=False) 
         go = requests.patch(patchurl,json=ExtraPass3Name_patch,headers=Headers,verify=False)
@@ -116,8 +127,8 @@ for a in dict_list:
             print('Failed !')
             f = f + 1
     except(SyntaxError):
-        print(a['Account_Name']+' Error! Account name if is correct ?')
+        print(a['Account_Name']+' Failed to Reconcile! Account name if is correct ?')
         e = e + 1
 
-print('All Reconcile Completed ! ' +str(s)+ ' Successful '+str(f)+' Failed '+str(e)+' Error! Press Enter to continue...')  
+print('\nAll Reconcile account Completed ! ' +str(s)+ ' Successful '+str(f)+' Failed '+str(e)+' Error!\nPress Enter to continue...')  
 input("")
